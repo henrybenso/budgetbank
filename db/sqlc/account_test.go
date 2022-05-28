@@ -1,6 +1,5 @@
 package db
 
-//test test test
 import (
 	"context"
 	"database/sql"
