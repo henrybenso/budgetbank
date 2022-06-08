@@ -9,10 +9,10 @@ import (
 	"github.com/techschool/simplebank/util"
 )
 
-func createRandomTransfer(t *testing.T) Transfer {
+func createRandomTransfer(t *testing.T, account1, account2 Account) Transfer {
 	arg := CreateTransferParams{
-		FromAccountID: 1,
-		ToAccountID:   2,
+		FromAccountID: account1.ID,
+		ToAccountID:   account2.ID,
 		Amount:        util.RandomMoney(),
 	}
 
@@ -24,20 +24,23 @@ func createRandomTransfer(t *testing.T) Transfer {
 	require.Equal(t, arg.ToAccountID, transfer.ToAccountID)
 	require.Equal(t, arg.Amount, transfer.Amount)
 
-	require.NotZero(t, transfer.FromAccountID)
-	require.NotZero(t, transfer.ToAccountID)
+	require.NotZero(t, transfer.ID)
 	require.NotZero(t, transfer.CreatedAt)
 
 	return transfer
 }
 
 func TestCreateTransfer(t *testing.T) {
-	createRandomTransfer(t)
+	account1 := createRandomAccount(t)
+	account2 := createRandomAccount(t)
+	createRandomTransfer(t, account1, account2)
 }
 
 func TestGetTransfer(t *testing.T) {
-	// crate transfer
-	transfer1 := createRandomTransfer(t)
+	account1 := createRandomAccount(t)
+	account2 := createRandomAccount(t)
+	transfer1 := createRandomTransfer(t, account1, account2)
+
 	transfer2, err := testQueries.GetTransfer(context.Background(), transfer1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, transfer2)
@@ -49,16 +52,21 @@ func TestGetTransfer(t *testing.T) {
 }
 
 func TestListTransfer(t *testing.T) {
+	account1 := createRandomAccount(t)
+	account2 := createRandomAccount(t)
 	for i := 0; i < 10; i++ {
-		createRandomTransfer(t)
+		createRandomTransfer(t, account1, account2)
+		createRandomTransfer(t, account1, account2)
 	}
 
-	arg := ListTransferParams{
-		Limit:  5,
-		Offset: 5,
+	arg := ListTransfersParams{
+		FromAccountID: account1.ID,
+		ToAccountID:   account2.ID,
+		Limit:         5,
+		Offset:        5,
 	}
 
-	transfers, err := testQueries.ListTransfer(context.Background(), arg)
+	transfers, err := testQueries.ListTransfers(context.Background(), arg)
 	require.NoError(t, err)
 	require.Len(t, transfers, 5)
 
